@@ -1,0 +1,93 @@
+import * as vscode from 'vscode';
+import { sayHello } from './test';
+
+let lastCommandTime: number = 0;
+let cyclePosition: number = 0;
+
+console.log("1. Extension file is being processed");
+
+// Add this to check keybinding registration
+vscode.commands.getCommands().then(commands => {
+    console.log("Available commands:", commands.filter(cmd => cmd.includes('emacs')));
+});
+
+export function activate(context: vscode.ExtensionContext) {
+    console.log("2. Activate function is running");
+    console.log("3.", sayHello());
+    
+    try {
+        console.log("4. About to create command");
+        let disposable = vscode.commands.registerCommand('emacs-ctrl-l.recenterCursor', () => {
+            console.log("5. Command was triggered");
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                console.log("6. No active editor");
+                return;
+            }
+
+            const currentTime = Date.now();
+            console.log("7. Current time:", currentTime);
+            console.log("8. Last command time:", lastCommandTime);
+            
+            if (currentTime - lastCommandTime > 1000) {
+                console.log("9. Resetting cycle position");
+                cyclePosition = 0;
+            }
+            lastCommandTime = currentTime;
+
+            console.log("10. Cycle position:", cyclePosition);
+            const cursorPosition = editor.selection.active;
+            let revealType: vscode.TextEditorRevealType;
+            switch (cyclePosition) {
+                case 0: // Center
+                    console.log("11. Centering");
+                    revealType = vscode.TextEditorRevealType.InCenter;
+                    break;
+                case 1: // Top
+                    console.log("12. Moving to top");
+                    // Calculate scope depth including anonymous functions
+                    let scopeBuffer = 0;
+                    let lineNum = cursorPosition.line;
+                    while (lineNum >= 0) {
+                        const line = editor.document.lineAt(lineNum).text;
+                        if (line.match(/\b(function|class|export|switch)\b/) || line.match(/=>\s*{/)) {
+                            scopeBuffer += 2;  // Add 2 lines for each scope level
+                        }
+                        lineNum--;
+                    }
+                    
+                    editor.revealRange(
+                        new vscode.Range(Math.max(0, cursorPosition.line - scopeBuffer), 0, cursorPosition.line, 0),
+                        vscode.TextEditorRevealType.AtTop
+                    );
+                    cyclePosition++;
+                    return;
+                case 2: // Bottom
+                    console.log("13. Moving to bottom");
+                    const visibleRanges = editor.visibleRanges[0];
+                    const visibleLines = visibleRanges.end.line - visibleRanges.start.line;
+                    const targetLine = Math.max(0, cursorPosition.line - visibleLines + 1);
+                    editor.revealRange(
+                        new vscode.Range(targetLine, 0, cursorPosition.line, 0),
+                        vscode.TextEditorRevealType.Default
+                    );
+                    cyclePosition = -1;
+                    return;
+                default:
+                    revealType = vscode.TextEditorRevealType.InCenter;
+            }
+            
+            console.log("14. Revealing at position:", cursorPosition.line);
+            editor.revealRange(
+                new vscode.Range(cursorPosition.line, 0, cursorPosition.line, 0),
+                revealType
+            );
+            cyclePosition++;
+        });
+        
+        console.log("7. Adding command to subscriptions");
+        context.subscriptions.push(disposable);
+    } catch (error) {
+        console.error("8. Error in activate:", error);
+    }
+}

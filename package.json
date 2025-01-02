@@ -1,0 +1,41 @@
+{
+    "name": "emacs-ctrl-l",
+    "displayName": "Emacs Ctrl+L",
+    "description": "Emacs-style Ctrl+L recenter behavior",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.96.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "emacs-ctrl-l.recenterCursor",
+                "title": "Recenter Cursor (Emacs style)"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "emacs-ctrl-l.recenterCursor",
+                "key": "ctrl+l",
+                "when": "editorTextFocus"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "devDependencies": {
+        "@types/node": "^14.x.x",
+        "@types/vscode": "^1.96.0",
+        "typescript": "^4.4.x"
+    }
+}
